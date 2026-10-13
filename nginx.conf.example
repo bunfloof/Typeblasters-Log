@@ -1,0 +1,35 @@
+# nginx site for typeblasterslogs.joey.ma  (e.g. /etc/nginx/sites-available/typeblasterslogs.joey.ma)
+#
+# Cloudflare talks to this over plain HTTP on port 80 and adds HTTPS for the
+# players, so:
+#   - no "listen 443" and no certificate here;
+#   - NO redirect from http to https here: with Cloudflare's "Flexible" SSL
+#     that redirect loops forever;
+#   - NO CORS headers here: app.py adds them, and a second copy breaks them.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name typeblasterslogs.joey.ma;
+
+    # Same body limit as app.py (1 MiB).
+    client_max_body_size 1m;
+
+    location / {
+        # The address and port app.py listens on. Replace SERVER_IP with the
+        # address the container's port is published on (for a panel
+        # allocation like 1.2.3.4:25630, that is 1.2.3.4). 127.0.0.1 only
+        # works when the port is published on 127.0.0.1 or 0.0.0.0.
+        proxy_pass http://SERVER_IP:25630;
+
+        proxy_set_header Host $host;
+        # The address nginx sees (a Cloudflare address when it goes through
+        # Cloudflare, or the visitor's own when someone skips Cloudflare).
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # Cloudflare's own headers (CF-Connecting-IP, CF-Ray, ...) are passed
+        # on to app.py automatically.
+
+        proxy_read_timeout 30s;
+    }
+}
