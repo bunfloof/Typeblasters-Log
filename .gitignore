@@ -1,0 +1,11 @@
+# Secrets: the database password lives here, only on the server.
+.env
+
+# The raw request log (players' IP addresses and data); it stays on the server.
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
